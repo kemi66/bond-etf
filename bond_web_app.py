@@ -4,6 +4,15 @@ import pandas as pd
 
 st.set_page_config(page_title="債券 ETF 殖利率雷達", layout="wide")
 st.title("📊 債券 ETF 即時殖利率與配息雷達")
+
+# --- 新增功能：抓取即時美金兌台幣匯率 ---
+try:
+    twd_rate = yf.Ticker("TWD=X").history(period="1d")['Close'].iloc[-1]
+    st.success(f"💵 目前即時匯率： **1 美元 (USD) = {twd_rate:.3f} 台幣 (TWD)**")
+except:
+    st.warning("⚠️ 目前無法取得即時匯率")
+# ------------------------------------
+
 st.markdown("🎯 **任務：** 自動抓取最新股價，以「最近一期配息」換算預估年化殖利率！")
 
 bonds_data = [
@@ -24,10 +33,8 @@ def fetch_bond_data():
     
     for ticker in tickers:
         try:
-            # 優先搜尋上櫃代碼 (.TWO)
             hist = yf.Ticker(f"{ticker}.TWO").history(period="5d")
             if hist.empty:
-                # 若找不到則切換搜尋上市代碼 (.TW)
                 hist = yf.Ticker(f"{ticker}.TW").history(period="5d")
                 
             if not hist.empty:
@@ -49,10 +56,10 @@ def fetch_bond_data():
 
 col1, col2 = st.columns([1, 4])
 with col1:
-    if st.button("🔄 更新最新股價", type="primary"):
+    if st.button("🔄 更新最新股價與匯率", type="primary"):
         st.cache_data.clear()
 
-with st.spinner("連線抓取最新報價中... (自動切換上市/上櫃資料庫尋找)"):
+with st.spinner("連線抓取最新報價與匯率中..."):
     df_display = fetch_bond_data()
 
 st.sidebar.header("🔍 篩選與排序")
